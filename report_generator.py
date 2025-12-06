@@ -171,6 +171,8 @@ def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], 
             background: #f1f5f9;
             padding: 1rem;
             border-radius: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }}
         
         select {{
@@ -179,6 +181,27 @@ def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], 
             border: 1px solid var(--border-color);
             font-size: 0.9rem;
             min-width: 200px;
+        }}
+        
+        .run-selector {{
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }}
+        
+        .run-btn {{
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }}
+        
+        .run-btn:hover {{
+            background-color: #e2e8f0;
         }}
 
         .result-card {{
@@ -208,6 +231,13 @@ def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], 
             color: #334155;
         }}
         
+        .stats-bar {{
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }}
+
         .stats-tag {{
             display: inline-flex;
             align-items: center;
@@ -217,35 +247,49 @@ def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], 
             font-weight: 600;
             background: #f1f5f9;
             color: #475569;
-            margin-right: 0.5rem;
+        }}
+        
+        .statistics-panel {{
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }}
+        
+        .stat-item {{
             margin-bottom: 0.5rem;
-        }}
-
-        /* Tabs */
-        .tabs {{
             display: flex;
-            gap: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 2rem;
-        }}
-
-        .tab-btn {{
-            padding: 0.75rem 1.5rem;
-            background: none;
-            border: none;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            font-weight: 500;
+            justify-content: space-between;
+            font-size: 0.85rem;
             color: var(--secondary-color);
         }}
 
-        .tab-btn.active {{
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
+        /* Table View */
+        .stats-table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+        }}
+
+        .stats-table th, .stats-table td {{
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }}
+
+        .stats-table th {{
+            font-weight: 600;
+            color: var(--secondary-color);
+            background-color: #f8fafc;
+        }}
+
+        .stats-table tr:hover {{
+            background-color: #f1f5f9;
         }}
         
-        .hidden {{
-            display: none;
+        .cell-number {{
+            text-align: right;
+            font-variant-numeric: tabular-nums;
         }}
 
     </style>
@@ -276,46 +320,116 @@ def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], 
 
     <script>
         const tasksData = {tasks_data_json};
+        const currentRunIndex = {{}}; // Tracks current run index for each comparison panel: key="left-0", val=0
 
         function initComparison(taskName, taskIndex) {{
-            const leftSelect = document.getElementById(`select-left-${{taskIndex}}`);
-            const rightSelect = document.getElementById(`select-right-${{taskIndex}}`);
-            
-            const render = (side) => {{
-                const select = side === 'left' ? leftSelect : rightSelect;
-                const pattern = select.value;
-                const result = tasksData[taskName].find(r => r.tone_pattern === pattern);
-                const container = document.getElementById(`result-${{side}}-${{taskIndex}}`);
+            // Only initialize if comparison elements exist (might be table view)
+            if (!document.getElementById(`select-left-${{taskIndex}}`)) return;
+
+            const setupSide = (side) => {{
+                const selectId = `select-${{side}}-${{taskIndex}}`;
+                const select = document.getElementById(selectId);
+                const runKey = `${{side}}-${{taskIndex}}`;
                 
-                if (!result) return;
+                // Initialize run index
+                currentRunIndex[runKey] = 0;
+
+                const render = () => {{
+                    const pattern = select.value;
+                    const result = tasksData[taskName].find(r => r.tone_pattern === pattern);
+                    const container = document.getElementById(`result-${{side}}-${{taskIndex}}`);
+                    
+                    if (!result) return;
+                    
+                    const runIdx = currentRunIndex[runKey] || 0;
+                    const runData = result.runs ? result.runs[runIdx] : null;
+                    const totalRuns = result.runs ? result.runs.length : 0;
+                    
+                    // Run Navigator Logic
+                    let runNavHtml = '';
+                    if (totalRuns > 1) {{
+                        runNavHtml = `
+                            <div class="run-selector" style="margin-top:0.5rem; width:100%; justify-content:flex-end;">
+                                <button class="run-btn" onclick="changeRun('${{runKey}}', -1, ${{totalRuns}})">◀</button>
+                                <span>Run ${{runIdx + 1}} / ${{totalRuns}}</span>
+                                <button class="run-btn" onclick="changeRun('${{runKey}}', 1, ${{totalRuns}})">▶</button>
+                            </div>
+                        `;
+                    }}
+                    
+                    // Statistics HTML
+                    let statsHtml = '';
+                    if (result.statistics && result.statistics.mean !== undefined) {{
+                        statsHtml = `
+                            <div class="statistics-panel">
+                                <div class="stat-item"><strong>統計 (全${{result.runs_count}}回)</strong></div>
+                                <div class="stat-item"><span>平均値:</span> <span>${{result.statistics.mean.toFixed(2)}}</span></div>
+                                ${{result.statistics.stdev !== undefined ? `<div class="stat-item"><span>標準偏差:</span> <span>${{result.statistics.stdev.toFixed(2)}}</span></div>` : ''}}
+                                ${{result.statistics.min !== undefined ? `<div class="stat-item"><span>最小/最大:</span> <span>${{result.statistics.min}} / ${{result.statistics.max}}</span></div>` : ''}}
+                            </div>
+                        `;
+                    }}
+
+                    // Response Data
+                    const responseContent = runData ? runData.response : (result.response || "No data");
+                    const tokens = runData && runData.usage ? runData.usage.total_tokens : 'N/A';
+                    const time = runData ? runData.execution_time_seconds.toFixed(2) : 'N/A';
+                    const length = runData ? runData.response_length : 'N/A';
+
+                    container.innerHTML = `
+                        <div class="prompt-text"><strong>プロンプト:</strong><br>${{escapeHtml(result.prompt)}}</div>
+                        
+                        <div class="stats-bar">
+                            <span class="stats-tag">文字数: ${{length}}</span>
+                            <span class="stats-tag">時間: ${{time}}s</span>
+                            <span class="stats-tag">トークン: ${{tokens}}</span>
+                        </div>
+                        
+                        <div class="response-text">${{escapeHtml(responseContent)}}</div>
+                        
+                        ${{statsHtml}}
+                        ${{runNavHtml}}
+                    `;
+                }};
                 
-                container.innerHTML = `
-                    <div class="prompt-text"><strong>プロンプト:</strong><br>${{escapeHtml(result.prompt)}}</div>
-                    <div class="stats-bar">
-                        <span class="stats-tag">文字数: ${{result.response_length}}</span>
-                        <span class="stats-tag">時間: ${{result.execution_time_seconds.toFixed(2)}}s</span>
-                        <span class="stats-tag">トークン: ${{result.usage ? result.usage.total_tokens : 'N/A'}}</span>
-                    </div>
-                    <div class="response-text">${{escapeHtml(result.response)}}</div>
-                `;
+                select.addEventListener('change', () => {{
+                    currentRunIndex[runKey] = 0; // Reset run index on pattern change
+                    render();
+                }});
+                
+                // Expose render function for global access (for run buttons)
+                window[`render_${{runKey}}`] = render;
+                
+                return render;
             }};
 
-            leftSelect.addEventListener('change', () => render('left'));
-            rightSelect.addEventListener('change', () => render('right'));
+            const renderLeft = setupSide('left');
+            const renderRight = setupSide('right');
 
             // Initial render
-            if (leftSelect.options.length > 0) render('left');
+            if (document.getElementById(`select-left-${{taskIndex}}`).options.length > 0) renderLeft();
+            const rightSelect = document.getElementById(`select-right-${{taskIndex}}`);
             if (rightSelect.options.length > 1) {{
                 rightSelect.selectedIndex = 1;
-                render('right');
-            }} else if (rightSelect.options.length > 0) {{
-                render('right');
+            }}
+            if (rightSelect.options.length > 0) renderRight();
+        }}
+        
+        function changeRun(runKey, delta, maxRuns) {{
+            const current = currentRunIndex[runKey] || 0;
+            let next = current + delta;
+            if (next < 0) next = maxRuns - 1;
+            if (next >= maxRuns) next = 0;
+            
+            currentRunIndex[runKey] = next;
+            if (window[`render_${{runKey}}`]) {{
+                window[`render_${{runKey}}`]();
             }}
         }}
 
         function escapeHtml(text) {{
             if (!text) return '';
-            return text
+            return String(text)
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
@@ -340,40 +454,94 @@ def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], 
 def generate_task_sections(tasks_data):
     html = ""
     for i, (task_name, results) in enumerate(tasks_data.items()):
-        options = "".join([f'<option value="{r["tone_pattern"]}">{r["tone_pattern"]}</option>' for r in results])
+        # Determine task type from the first result
+        task_type = results[0].get("task_type", "default")
         
-        html += f"""
-        <section id="task-{i}" class="task-section">
-            <h2>{task_name}</h2>
+        html += f'<section id="task-{i}" class="task-section">'
+        html += f'<h2>{task_name}</h2>'
+        
+        if task_type == "typo_detection":
+            html += generate_stats_table(results)
+        else:
+            html += generate_comparison_view(i, results)
             
-            <div class="comparison-container">
-                <!-- Left Column -->
-                <div class="comparison-column">
-                    <div class="comparison-controls">
-                        <label>比較 A</label>
-                        <select id="select-left-{i}">
-                            {options}
-                        </select>
-                    </div>
-                    <div id="result-left-{i}" class="result-card">
-                        <!-- Content injected by JS -->
-                    </div>
-                </div>
-
-                <!-- Right Column -->
-                <div class="comparison-column">
-                    <div class="comparison-controls">
-                        <label>比較 B</label>
-                        <select id="select-right-{i}">
-                            {options}
-                        </select>
-                    </div>
-                    <div id="result-right-{i}" class="result-card">
-                        <!-- Content injected by JS -->
-                    </div>
-                </div>
-            </div>
-        </section>
-        """
+        html += '</section>'
+            
     return html
 
+def generate_stats_table(results):
+    html = """
+    <table class="stats-table">
+        <thead>
+            <tr>
+                <th>口調パターン</th>
+                <th class="cell-number">平均値</th>
+                <th class="cell-number">標準偏差</th>
+                <th class="cell-number">最小</th>
+                <th class="cell-number">最大</th>
+                <th class="cell-number">サンプル数</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    
+    for r in results:
+        stats = r.get("statistics", {})
+        mean = f"{stats.get('mean', 0):.2f}" if "mean" in stats else "-"
+        stdev = f"{stats.get('stdev', 0):.2f}" if "stdev" in stats else "-"
+        min_val = stats.get("min", "-")
+        max_val = stats.get("max", "-")
+        count = len(r.get("runs", []))
+        
+        html += f"""
+        <tr>
+            <td><strong>{r['tone_pattern']}</strong></td>
+            <td class="cell-number">{mean}</td>
+            <td class="cell-number">{stdev}</td>
+            <td class="cell-number">{min_val}</td>
+            <td class="cell-number">{max_val}</td>
+            <td class="cell-number">{count}</td>
+        </tr>
+        """
+        
+    html += """
+        </tbody>
+    </table>
+    <div style="margin-top: 1rem; color: #64748b; font-size: 0.9rem;">
+        ※ 数値は実験で抽出された誤字脱字の指摘数を示しています。
+    </div>
+    """
+    return html
+
+def generate_comparison_view(index, results):
+    options = "".join([f'<option value="{r["tone_pattern"]}">{r["tone_pattern"]}</option>' for r in results])
+    
+    return f"""
+    <div class="comparison-container">
+        <!-- Left Column -->
+        <div class="comparison-column">
+            <div class="comparison-controls">
+                <label>比較 A</label>
+                <select id="select-left-{index}">
+                    {options}
+                </select>
+            </div>
+            <div id="result-left-{index}" class="result-card">
+                <!-- Content injected by JS -->
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="comparison-column">
+            <div class="comparison-controls">
+                <label>比較 B</label>
+                <select id="select-right-{index}">
+                    {options}
+                </select>
+            </div>
+            <div id="result-right-{index}" class="result-card">
+                <!-- Content injected by JS -->
+            </div>
+        </div>
+    </div>
+    """

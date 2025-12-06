@@ -5,9 +5,11 @@ GPTプロンプト口調実験スクリプト
 """
 
 import os
+import re
 import json
+import statistics
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 from openai import OpenAI
 from report_generator import generate_html_report
@@ -36,6 +38,24 @@ def load_file(filename: str) -> Any:
         else:
             raise ValueError(f"Unsupported file type: {filename}")
     
+
+
+def extract_number(text: str) -> Optional[int]:
+    """
+    テキストから数値を抽出する
+
+    Args:
+        text: レスポンステキスト
+
+    Returns:
+        抽出された数値、または抽出できない場合はNone
+    """
+    if not text:
+        return None
+    match = re.search(r'\d+', text)
+    if match:
+        return int(match.group())
+    return None
 
 
 def generate(client: OpenAI, prompt: str, model: str = "gpt-4") -> Dict[str, Any]:
@@ -91,7 +111,7 @@ def build_prompt(task: Dict[str, Any], tone_instruction: str) -> str:
     Returns:
         完全なプロンプト文字列
     """
-    task_type = task.get("type", "default")
+    task_type = task["type"]
     content = task["content"]
 
     if task_type == "typo_detection":
@@ -117,9 +137,11 @@ def run_experiment(client: OpenAI, config: Dict[str, Any], tone_patterns: Dict[s
     results = []
     tasks = config["tasks"]
     model = config["model"]
+    runs_per_task = config["runs_per_task"]
 
     for task in tasks:
         task_name = task["name"]
+        task_type = task["type"]
 
         # タスクのコンテンツを読み込み
         if task["content_type"] == "file":
@@ -129,33 +151,64 @@ def run_experiment(client: OpenAI, config: Dict[str, Any], tone_patterns: Dict[s
             # プロンプト構築
             prompt = build_prompt(task, tone_instruction)
 
-            # API呼び出し
-            start_time = datetime.now()
-            api_result = generate(client, prompt, model)
-            end_time = datetime.now()
+            # 複数回実行用のデータ
+            run_results = []
+            extracted_values = []
 
-            if api_result["success"]:
-                print(f"✓ 完了 ({api_result['answer_length']} 文字)")
-            else:
-                print(f"✗ エラー: {api_result['error']}")
+            # typo_detectionは複数回、それ以外は1回
+            actual_runs = runs_per_task if task_type == "typo_detection" else 1
+
+            for run_num in range(actual_runs):
+                print(f"  実行 {run_num + 1}/{actual_runs}...", end=" ")
+
+                # API呼び出し
+                start_time = datetime.now()
+                api_result = generate(client, prompt, model)
+                end_time = datetime.now()
+
+                if api_result["success"]:
+                    print(f"✓ ({api_result['answer']})")
+                    # 数値を抽出（typo_detectionの場合）
+                    if task_type == "typo_detection":
+                        extracted = extract_number(api_result["answer"])
+                        if extracted is not None:
+                            extracted_values.append(extracted)
+                else:
+                    print(f"✗ エラー: {api_result['error']}")
+
+                run_results.append({
+                    "run_number": run_num + 1,
+                    "response": api_result["answer"],
+                    "response_length": api_result["answer_length"],
+                    "execution_time_seconds": (end_time - start_time).total_seconds(),
+                    "success": api_result["success"],
+                    "extracted_value": extract_number(api_result["answer"]) if api_result["success"] else None,
+                    "usage": api_result.get("usage"),
+                    "error": api_result.get("error")
+                })
+
+            # 統計情報を計算
+            stats = {}
+            if extracted_values:
+                stats["mean"] = statistics.mean(extracted_values)
+                stats["values"] = extracted_values
+                if len(extracted_values) >= 2:
+                    stats["stdev"] = statistics.stdev(extracted_values)
+                    stats["min"] = min(extracted_values)
+                    stats["max"] = max(extracted_values)
 
             # 結果を記録
             result = {
                 "task_name": task_name,
+                "task_type": task_type,
                 "tone_pattern": tone_key,
                 "prompt": prompt,
-                "response": api_result["answer"],
-                "response_length": api_result["answer_length"],
-                "timestamp": start_time.isoformat(),
-                "execution_time_seconds": (end_time - start_time).total_seconds(),
-                "success": api_result["success"]
+                "runs": run_results,
+                "runs_count": actual_runs,
+                "timestamp": datetime.now().isoformat(),
+                "model": model,
+                "statistics": stats
             }
-
-            if api_result["success"]:
-                result["usage"] = api_result["usage"]
-                result["model"] = api_result["model"]
-            else:
-                result["error"] = api_result["error"]
 
             results.append(result)
 
