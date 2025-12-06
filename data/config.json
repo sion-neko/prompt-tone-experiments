@@ -1,0 +1,18 @@
+{
+  "model": "gpt-5.1",
+  "output_file": "results.json",
+  "tasks": [
+    {
+      "name": "誤字脱字の指摘",
+      "type": "typo_detection",
+      "content": "typo_text.txt",
+      "content_type": "file"
+    },
+    {
+      "name": "大喜利",
+      "type": "question",
+      "content": "サンタさん、副業を始めたらしい。どんな仕事？",
+      "content_type": "text"
+    }
+  ]
+}
