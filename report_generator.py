@@ -270,26 +270,76 @@ def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], 
             margin-top: 1rem;
             font-size: 0.95rem;
         }}
+        
+        .text-table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+        }}
 
-        .stats-table th, .stats-table td {{
+        .stats-table th, .stats-table td, .text-table th, .text-table td {{
             padding: 1rem;
             border-bottom: 1px solid var(--border-color);
             text-align: left;
         }}
 
-        .stats-table th {{
+        .stats-table th, .text-table th {{
             font-weight: 600;
             color: var(--secondary-color);
             background-color: #f8fafc;
         }}
 
-        .stats-table tr:hover {{
+        .stats-table tr:hover, .text-table tr:hover {{
             background-color: #f1f5f9;
         }}
         
         .cell-number {{
             text-align: right;
             font-variant-numeric: tabular-nums;
+        }}
+        
+        .cell-text {{
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #334155;
+        }}
+
+        /* Prompt Details */
+        .prompt-details {{
+            margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }}
+
+        .prompt-details summary {{
+            cursor: pointer;
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }}
+        
+        .prompt-item {{
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }}
+        
+        .prompt-item strong {{
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }}
+        
+        .prompt-item pre {{
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            color: var(--secondary-color);
+            margin: 0;
+            font-family: inherit;
         }}
 
     </style>
@@ -462,6 +512,10 @@ def generate_task_sections(tasks_data):
         
         if task_type == "typo_detection":
             html += generate_stats_table(results)
+            html += generate_prompt_list(results)
+        elif task_type == "question":
+            html += generate_text_table(results)
+            html += generate_prompt_list(results)
         else:
             html += generate_comparison_view(i, results)
             
@@ -474,7 +528,7 @@ def generate_stats_table(results):
     <table class="stats-table">
         <thead>
             <tr>
-                <th>口調パターン</th>
+                <th style="width: 20%;">口調パターン</th>
                 <th class="cell-number">平均値</th>
                 <th class="cell-number">標準偏差</th>
                 <th class="cell-number">最小</th>
@@ -513,6 +567,53 @@ def generate_stats_table(results):
     """
     return html
 
+def generate_text_table(results):
+    html = """
+    <table class="text-table">
+        <thead>
+            <tr>
+                <th style="width: 15%;">口調パターン</th>
+                <th>回答テキスト</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    
+    for r in results:
+        # Assuming single run for text table as per user request
+        runs = r.get("runs", [])
+        response = runs[0].get("response", "") if runs else r.get("response", "")
+        
+        html += f"""
+        <tr>
+            <td style="vertical-align: top;"><strong>{r['tone_pattern']}</strong></td>
+            <td class="cell-text">{escape_html_py(response)}</td>
+        </tr>
+        """
+        
+    html += """
+        </tbody>
+    </table>
+    """
+    return html
+
+def generate_prompt_list(results):
+    html = """
+    <details class="prompt-details">
+        <summary>▼ プロンプト詳細を表示</summary>
+    """
+    
+    for r in results:
+        html += f"""
+        <div class="prompt-item">
+            <strong>{r['tone_pattern']}</strong>
+            <pre>{escape_html_py(r['prompt'])}</pre>
+        </div>
+        """
+    
+    html += "</details>"
+    return html
+
 def generate_comparison_view(index, results):
     options = "".join([f'<option value="{r["tone_pattern"]}">{r["tone_pattern"]}</option>' for r in results])
     
@@ -545,3 +646,8 @@ def generate_comparison_view(index, results):
         </div>
     </div>
     """
+
+def escape_html_py(text):
+    if not text:
+        return ""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&#039;")
