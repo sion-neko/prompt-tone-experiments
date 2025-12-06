@@ -1,6 +1,7 @@
 {
   "model": "gpt-5.1",
   "output_file": "results.json",
+  "runs_per_task": 10,
   "tasks": [
     {
       "name": "誤字脱字の指摘",
