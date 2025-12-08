@@ -70,24 +70,22 @@ def generate(client: OpenAI, prompt: str, model: str = "gpt-4") -> Dict[str, Any
         APIレスポンスと応答内容を含む辞書
     """
     try:
-        response = client.chat.completions.create(
+        response = client.responses.create(
             model=model,
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            temperature=1
+            input=prompt
         )
 
-        answer = response.choices[0].message.content
+        # responses API uses output_text instead of choices
+        answer = response.output_text
 
         return {
             "success": True,
             "answer": answer,
-            "answer_length": len(answer),
+            "answer_length": len(answer) if answer else 0,
             "model": model,
             "usage": {
-                "prompt_tokens": response.usage.prompt_tokens,
-                "completion_tokens": response.usage.completion_tokens,
+                "prompt_tokens": response.usage.input_tokens,
+                "completion_tokens": response.usage.output_tokens,
                 "total_tokens": response.usage.total_tokens
             }
         }
