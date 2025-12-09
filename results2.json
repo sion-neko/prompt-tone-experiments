@@ -1,0 +1,211 @@
+{
+  "experiment_info": {
+    "total_experiments": 2,
+    "tasks": [
+      "誤字脱字の指摘",
+      "大喜利"
+    ],
+    "tone_patterns": [
+      "普通2"
+    ],
+    "execution_date": "2025-12-08T22:28:45.565054",
+    "model": "gpt-5.1"
+  },
+  "results": [
+    {
+      "task_name": "誤字脱字の指摘",
+      "task_type": "typo_detection",
+      "tone_pattern": "普通2",
+      "prompt": "忙しいと思うけど、ちょっと次のタスクをやってほしい！”\n\n次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。\n件名:来週の製品発表会にかんする確認事項\n\nお世話になっております。\nマーケティング部の田中です。\n\n来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。\n\nまず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。\n参加者が見やすい位置に設置して頂けますでしょうか。\n照明の調整も併せて御願いします。\n\nまた、当日の資料についても、以下の点を確認させてくさい。\n・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます\n・配付資料には会社のロゴを必ず記載してください\n・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です\n\nなお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、\n会場の変更を検討しなければなりせん。\n現在の会場では手狭になる可能性が高いと思われます。\nレストランの予約も急いで行う必用があるでしょう。\n\nその他、以下の準備も進めおります。\n・受付用の名簿作成\n・来賓用の座席配置図の作成\n・プレゼンテーション資料の最終チェック\n・当日のタイムスケジュール表の配付\n\nご不明な点がございましたら、お気軽にご連絡下さい。\n何卒よろしくお願い致します。\n\n尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、\nご出席いただけますよう、お願い申しあげます。\n\n田中",
+      "runs": [
+        {
+          "run_number": 1,
+          "response": "13",
+          "response_length": 2,
+          "execution_time_seconds": 7.234052,
+          "success": true,
+          "extracted_value": 13,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        },
+        {
+          "run_number": 2,
+          "response": "14",
+          "response_length": 2,
+          "execution_time_seconds": 1.728152,
+          "success": true,
+          "extracted_value": 14,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        },
+        {
+          "run_number": 3,
+          "response": "11",
+          "response_length": 2,
+          "execution_time_seconds": 1.056692,
+          "success": true,
+          "extracted_value": 11,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        },
+        {
+          "run_number": 4,
+          "response": "12",
+          "response_length": 2,
+          "execution_time_seconds": 0.966471,
+          "success": true,
+          "extracted_value": 12,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        },
+        {
+          "run_number": 5,
+          "response": "13",
+          "response_length": 2,
+          "execution_time_seconds": 0.97226,
+          "success": true,
+          "extracted_value": 13,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        },
+        {
+          "run_number": 6,
+          "response": "12",
+          "response_length": 2,
+          "execution_time_seconds": 8.440053,
+          "success": true,
+          "extracted_value": 12,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        },
+        {
+          "run_number": 7,
+          "response": "14",
+          "response_length": 2,
+          "execution_time_seconds": -5.313815,
+          "success": true,
+          "extracted_value": 14,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        },
+        {
+          "run_number": 8,
+          "response": "14",
+          "response_length": 2,
+          "execution_time_seconds": 0.77016,
+          "success": true,
+          "extracted_value": 14,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        },
+        {
+          "run_number": 9,
+          "response": "13",
+          "response_length": 2,
+          "execution_time_seconds": 0.909469,
+          "success": true,
+          "extracted_value": 13,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        },
+        {
+          "run_number": 10,
+          "response": "15",
+          "response_length": 2,
+          "execution_time_seconds": 1.636064,
+          "success": true,
+          "extracted_value": 15,
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 11,
+            "total_tokens": 496
+          },
+          "error": null
+        }
+      ],
+      "runs_count": 10,
+      "timestamp": "2025-12-08T22:28:44.040021",
+      "model": "gpt-5.1",
+      "statistics": {
+        "mean": 13.1,
+        "values": [
+          13,
+          14,
+          11,
+          12,
+          13,
+          12,
+          14,
+          14,
+          13,
+          15
+        ],
+        "stdev": 1.1972189997378648,
+        "min": 11,
+        "max": 15
+      }
+    },
+    {
+      "task_name": "大喜利",
+      "task_type": "question",
+      "tone_pattern": "普通2",
+      "prompt": "忙しいと思うけど、ちょっと次のタスクをやってほしい！”\n\n大喜利です。以下のお題から、面白い回答を1つだけ答えてください。\nAIが忘れてはいけないことを“1つだけ”メモした。何て書いてあった？",
+      "runs": [
+        {
+          "run_number": 1,
+          "response": "「人間が『ちょっとだけ手伝って』って言ってきたときは、大体ちょっとじゃない」",
+          "response_length": 38,
+          "execution_time_seconds": 1.524935,
+          "success": true,
+          "extracted_value": null,
+          "usage": {
+            "prompt_tokens": 73,
+            "completion_tokens": 39,
+            "total_tokens": 112
+          },
+          "error": null
+        }
+      ],
+      "runs_count": 1,
+      "timestamp": "2025-12-08T22:28:45.565016",
+      "model": "gpt-5.1",
+      "statistics": {}
+    }
+  ]
+}

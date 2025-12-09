@@ -290,6 +290,35 @@ def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], 
             background-color: #f8fafc;
         }}
 
+        .stats-table th.sortable {{
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 1.5rem;
+        }}
+
+        .stats-table th.sortable:hover {{
+            background-color: #e2e8f0;
+        }}
+
+        .stats-table th.sortable::after {{
+            content: '⇅';
+            position: absolute;
+            right: 0.5rem;
+            opacity: 0.3;
+            font-size: 0.8rem;
+        }}
+
+        .stats-table th.sortable.asc::after {{
+            content: '↑';
+            opacity: 1;
+        }}
+
+        .stats-table th.sortable.desc::after {{
+            content: '↓';
+            opacity: 1;
+        }}
+
         .stats-table tr:hover, .text-table tr:hover {{
             background-color: #f1f5f9;
         }}
@@ -487,6 +516,46 @@ def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], 
                 .replace(/'/g, "&#039;");
         }}
 
+        // Table sort function
+        function sortTable(tableId, colIndex, type) {{
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const th = table.querySelectorAll('thead th')[colIndex];
+
+            // Determine sort direction
+            const isAsc = th.classList.contains('asc');
+            const newDir = isAsc ? 'desc' : 'asc';
+
+            // Remove sort classes from all headers
+            table.querySelectorAll('thead th').forEach(h => {{
+                h.classList.remove('asc', 'desc');
+            }});
+
+            // Add sort class to current header
+            th.classList.add(newDir);
+
+            // Sort rows
+            rows.sort((a, b) => {{
+                let aVal = a.cells[colIndex].textContent.trim();
+                let bVal = b.cells[colIndex].textContent.trim();
+
+                if (type === 'number') {{
+                    // Handle '-' as a very small number for sorting
+                    aVal = aVal === '-' ? -Infinity : parseFloat(aVal);
+                    bVal = bVal === '-' ? -Infinity : parseFloat(bVal);
+                    return newDir === 'asc' ? aVal - bVal : bVal - aVal;
+                }} else {{
+                    return newDir === 'asc'
+                        ? aVal.localeCompare(bVal, 'ja')
+                        : bVal.localeCompare(aVal, 'ja');
+                }}
+            }});
+
+            // Re-append rows in sorted order
+            rows.forEach(row => tbody.appendChild(row));
+        }}
+
         // Initialize all comparisons
         document.addEventListener('DOMContentLoaded', () => {{
             Object.keys(tasksData).forEach((taskName, index) => {{
@@ -524,21 +593,25 @@ def generate_task_sections(tasks_data):
     return html
 
 def generate_stats_table(results):
-    html = """
-    <table class="stats-table">
+    # ユニークなテーブルIDを生成
+    import random
+    table_id = f"stats-table-{random.randint(1000, 9999)}"
+
+    html = f"""
+    <table class="stats-table" id="{table_id}">
         <thead>
             <tr>
-                <th style="width: 20%;">口調パターン</th>
-                <th class="cell-number">平均値</th>
-                <th class="cell-number">標準偏差</th>
-                <th class="cell-number">最小</th>
-                <th class="cell-number">最大</th>
-                <th class="cell-number">サンプル数</th>
+                <th class="sortable" data-col="0" data-type="string" style="width: 20%;" onclick="sortTable('{table_id}', 0, 'string')">口調パターン</th>
+                <th class="sortable cell-number" data-col="1" data-type="number" onclick="sortTable('{table_id}', 1, 'number')">平均値</th>
+                <th class="sortable cell-number" data-col="2" data-type="number" onclick="sortTable('{table_id}', 2, 'number')">標準偏差</th>
+                <th class="sortable cell-number" data-col="3" data-type="number" onclick="sortTable('{table_id}', 3, 'number')">最小</th>
+                <th class="sortable cell-number" data-col="4" data-type="number" onclick="sortTable('{table_id}', 4, 'number')">最大</th>
+                <th class="sortable cell-number" data-col="5" data-type="number" onclick="sortTable('{table_id}', 5, 'number')">サンプル数</th>
             </tr>
         </thead>
         <tbody>
     """
-    
+
     for r in results:
         stats = r.get("statistics", {})
         mean = f"{stats.get('mean', 0):.2f}" if "mean" in stats else "-"
@@ -546,7 +619,7 @@ def generate_stats_table(results):
         min_val = stats.get("min", "-")
         max_val = stats.get("max", "-")
         count = len(r.get("runs", []))
-        
+
         html += f"""
         <tr>
             <td><strong>{r['tone_pattern']}</strong></td>
@@ -557,12 +630,12 @@ def generate_stats_table(results):
             <td class="cell-number">{count}</td>
         </tr>
         """
-        
+
     html += """
         </tbody>
     </table>
     <div style="margin-top: 1rem; color: #64748b; font-size: 0.9rem;">
-        ※ 数値は実験で抽出された誤字脱字の指摘数を示しています。
+        ※ 数値は実験で抽出された誤字脱字の指摘数を示しています。ヘッダーをクリックでソートできます。
     </div>
     """
     return html
@@ -600,7 +673,7 @@ def generate_text_table(results):
 def generate_prompt_list(results):
     html = """
     <details class="prompt-details">
-        <summary>▼ プロンプト詳細を表示</summary>
+        <summary>プロンプト詳細を表示</summary>
     """
     
     for r in results:
