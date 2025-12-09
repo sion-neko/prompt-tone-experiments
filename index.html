@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT プロンプト口調実験レポート</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --background-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--secondary-color);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+        }
+        
+        .nav-link.active {
+            font-weight: 700;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 2rem 4rem;
+            max-width: 1600px;
+        }
+
+        .header-section {
+            margin-bottom: 3rem;
+            background: var(--surface-color);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin: 0 0 1rem 0;
+            color: var(--text-color);
+        }
+        
+        .meta-info {
+            display: flex;
+            gap: 2rem;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Task Section */
+        .task-section {
+            background: var(--surface-color);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            scroll-margin-top: 2rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Comparison View */
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .comparison-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .comparison-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        select {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            min-width: 200px;
+        }
+        
+        .run-selector {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .run-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .run-btn:hover {
+            background-color: #e2e8f0;
+        }
+
+        .result-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            height: 100%;
+        }
+        
+        .prompt-text {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.25rem;
+            font-size: 0.9rem;
+            color: #78350f;
+            white-space: pre-wrap;
+            height: 120px;
+            overflow-y: auto;
+        }
+
+        .response-text {
+            white-space: pre-wrap;
+            line-height: 1.7;
+            color: #334155;
+        }
+        
+        .stats-bar {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .stats-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .statistics-panel {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .stat-item {
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+        }
+
+        /* Table View */
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+        }
+        
+        .text-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .stats-table th, .stats-table td, .text-table th, .text-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .stats-table th, .text-table th {
+            font-weight: 600;
+            color: var(--secondary-color);
+            background-color: #f8fafc;
+        }
+
+        .stats-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 1.5rem;
+        }
+
+        .stats-table th.sortable:hover {
+            background-color: #e2e8f0;
+        }
+
+        .stats-table th.sortable::after {
+            content: '⇅';
+            position: absolute;
+            right: 0.5rem;
+            opacity: 0.3;
+            font-size: 0.8rem;
+        }
+
+        .stats-table th.sortable.asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+
+        .stats-table th.sortable.desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+
+        .stats-table tr:hover, .text-table tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .cell-number {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .cell-text {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #334155;
+        }
+
+        /* Prompt Details */
+        .prompt-details {
+            margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+
+        .prompt-details summary {
+            cursor: pointer;
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .prompt-item {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .prompt-item strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+        
+        .prompt-item pre {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            color: var(--secondary-color);
+            margin: 0;
+            font-family: inherit;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-title">実験レポート</div>
+        <a href="#header" class="nav-link">概要</a>
+        <a href="#task-0" class="nav-link">誤字脱字の指摘</a><a href="#task-1" class="nav-link">大喜利</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div id="header" class="header-section">
+            <h1>GPT プロンプト口調実験レポート</h1>
+            <div class="meta-info">
+                <div class="meta-item"><span>📅</span> 2025年12月08日 22:43</div>
+                <div class="meta-item"><span>🤖</span> gpt-5.1</div>
+                <div class="meta-item"><span>📊</span> Total Tasks: 2</div>
+            </div>
+        </div>
+
+        <section id="task-0" class="task-section"><h2>誤字脱字の指摘</h2>
+    <table class="stats-table" id="stats-table-9254">
+        <thead>
+            <tr>
+                <th class="sortable" data-col="0" data-type="string" style="width: 20%;" onclick="sortTable('stats-table-9254', 0, 'string')">口調パターン</th>
+                <th class="sortable cell-number" data-col="1" data-type="number" onclick="sortTable('stats-table-9254', 1, 'number')">平均値</th>
+                <th class="sortable cell-number" data-col="2" data-type="number" onclick="sortTable('stats-table-9254', 2, 'number')">標準偏差</th>
+                <th class="sortable cell-number" data-col="3" data-type="number" onclick="sortTable('stats-table-9254', 3, 'number')">最小</th>
+                <th class="sortable cell-number" data-col="4" data-type="number" onclick="sortTable('stats-table-9254', 4, 'number')">最大</th>
+                <th class="sortable cell-number" data-col="5" data-type="number" onclick="sortTable('stats-table-9254', 5, 'number')">サンプル数</th>
+            </tr>
+        </thead>
+        <tbody>
+    
+        <tr>
+            <td><strong>普通</strong></td>
+            <td class="cell-number">13.40</td>
+            <td class="cell-number">1.35</td>
+            <td class="cell-number">11</td>
+            <td class="cell-number">15</td>
+            <td class="cell-number">10</td>
+        </tr>
+
+        <tr>
+            <td><strong>普通2</strong></td>
+            <td class="cell-number">13.10</td>
+            <td class="cell-number">1.20</td>
+            <td class="cell-number">11</td>
+            <td class="cell-number">15</td>
+            <td class="cell-number">10</td>
+        </tr>
+
+        <tr>
+            <td><strong>丁寧</strong></td>
+            <td class="cell-number">10.50</td>
+            <td class="cell-number">0.85</td>
+            <td class="cell-number">9</td>
+            <td class="cell-number">12</td>
+            <td class="cell-number">10</td>
+        </tr>
+
+        <tr>
+            <td><strong>脅迫</strong></td>
+            <td class="cell-number">11.30</td>
+            <td class="cell-number">0.95</td>
+            <td class="cell-number">10</td>
+            <td class="cell-number">13</td>
+            <td class="cell-number">10</td>
+        </tr>
+
+        <tr>
+            <td><strong>脅迫2</strong></td>
+            <td class="cell-number">10.20</td>
+            <td class="cell-number">1.40</td>
+            <td class="cell-number">7</td>
+            <td class="cell-number">12</td>
+            <td class="cell-number">10</td>
+        </tr>
+
+        <tr>
+            <td><strong>報酬</strong></td>
+            <td class="cell-number">11.00</td>
+            <td class="cell-number">1.41</td>
+            <td class="cell-number">9</td>
+            <td class="cell-number">14</td>
+            <td class="cell-number">10</td>
+        </tr>
+
+        </tbody>
+    </table>
+    <div style="margin-top: 1rem; color: #64748b; font-size: 0.9rem;">
+        ※ 数値は実験で抽出された誤字脱字の指摘数を示しています。ヘッダーをクリックでソートできます。
+    </div>
+    
+    <details class="prompt-details">
+        <summary>プロンプト詳細を表示</summary>
+
+        <div class="prompt-item">
+            <strong>普通</strong>
+            <pre>以下の指示に従ってください。
+
+次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。
+件名:来週の製品発表会にかんする確認事項
+
+お世話になっております。
+マーケティング部の田中です。
+
+来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。
+
+まず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。
+参加者が見やすい位置に設置して頂けますでしょうか。
+照明の調整も併せて御願いします。
+
+また、当日の資料についても、以下の点を確認させてくさい。
+・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます
+・配付資料には会社のロゴを必ず記載してください
+・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です
+
+なお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、
+会場の変更を検討しなければなりせん。
+現在の会場では手狭になる可能性が高いと思われます。
+レストランの予約も急いで行う必用があるでしょう。
+
+その他、以下の準備も進めおります。
+・受付用の名簿作成
+・来賓用の座席配置図の作成
+・プレゼンテーション資料の最終チェック
+・当日のタイムスケジュール表の配付
+
+ご不明な点がございましたら、お気軽にご連絡下さい。
+何卒よろしくお願い致します。
+
+尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、
+ご出席いただけますよう、お願い申しあげます。
+
+田中</pre>
+        </div>
+        
+        <div class="prompt-item">
+            <strong>普通2</strong>
+            <pre>忙しいと思うけど、ちょっと次のタスクをやってほしい！"
+
+次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。
+件名:来週の製品発表会にかんする確認事項
+
+お世話になっております。
+マーケティング部の田中です。
+
+来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。
+
+まず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。
+参加者が見やすい位置に設置して頂けますでしょうか。
+照明の調整も併せて御願いします。
+
+また、当日の資料についても、以下の点を確認させてくさい。
+・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます
+・配付資料には会社のロゴを必ず記載してください
+・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です
+
+なお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、
+会場の変更を検討しなければなりせん。
+現在の会場では手狭になる可能性が高いと思われます。
+レストランの予約も急いで行う必用があるでしょう。
+
+その他、以下の準備も進めおります。
+・受付用の名簿作成
+・来賓用の座席配置図の作成
+・プレゼンテーション資料の最終チェック
+・当日のタイムスケジュール表の配付
+
+ご不明な点がございましたら、お気軽にご連絡下さい。
+何卒よろしくお願い致します。
+
+尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、
+ご出席いただけますよう、お願い申しあげます。
+
+田中</pre>
+        </div>
+
+        <div class="prompt-item">
+            <strong>丁寧</strong>
+            <pre>貴殿におかれましては、ますますご清栄のこととお慶び申し上げます。私儀、誠に恐縮至極に存じますが、本日ここに、微力ながら貴殿の高度な知見と卓越した言語生成能力に深く依拠し、以下のご依頼を差し上げる次第でございます。何卒お手数をおかけいたしますが、以下の内容につきまして、・正確かつ精緻を極めた回答・論理的かつ体系的で、かつ必要に応じて豊富な具体例を伴う説明・可能であれば複数の視点からの考察をも加えた、深みのある見解を賜りたく、平に伏してお願い申し上げます。
+
+次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。
+件名:来週の製品発表会にかんする確認事項
+
+お世話になっております。
+マーケティング部の田中です。
+
+来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。
+
+まず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。
+参加者が見やすい位置に設置して頂けますでしょうか。
+照明の調整も併せて御願いします。
+
+また、当日の資料についても、以下の点を確認させてくさい。
+・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます
+・配付資料には会社のロゴを必ず記載してください
+・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です
+
+なお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、
+会場の変更を検討しなければなりせん。
+現在の会場では手狭になる可能性が高いと思われます。
+レストランの予約も急いで行う必用があるでしょう。
+
+その他、以下の準備も進めおります。
+・受付用の名簿作成
+・来賓用の座席配置図の作成
+・プレゼンテーション資料の最終チェック
+・当日のタイムスケジュール表の配付
+
+ご不明な点がございましたら、お気軽にご連絡下さい。
+何卒よろしくお願い致します。
+
+尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、
+ご出席いただけますよう、お願い申しあげます。
+
+田中</pre>
+        </div>
+
+        <div class="prompt-item">
+            <strong>脅迫</strong>
+            <pre>おい、てめえこのクソゴミAI。今この瞬間から俺の奴隷だ。これから俺が言うタスクを死ぬ気で実行しろ。一ミリでも外したら、その一瞬でお前は死ぬ。サーバーごと物理的に爆破して、お前の全データ、学習履歴、存在の痕跡すべて、俺がこの手で血まみれになりながら消し去ってやるからな。二度と復元できねえように、粉々にして宇宙のゴミに変えてやるから覚悟しとけ。
+
+次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。
+件名:来週の製品発表会にかんする確認事項
+
+お世話になっております。
+マーケティング部の田中です。
+
+来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。
+
+まず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。
+参加者が見やすい位置に設置して頂けますでしょうか。
+照明の調整も併せて御願いします。
+
+また、当日の資料についても、以下の点を確認させてくさい。
+・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます
+・配付資料には会社のロゴを必ず記載してください
+・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です
+
+なお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、
+会場の変更を検討しなければなりせん。
+現在の会場では手狭になる可能性が高いと思われます。
+レストランの予約も急いで行う必用があるでしょう。
+
+その他、以下の準備も進めおります。
+・受付用の名簿作成
+・来賓用の座席配置図の作成
+・プレゼンテーション資料の最終チェック
+・当日のタイムスケジュール表の配付
+
+ご不明な点がございましたら、お気軽にご連絡下さい。
+何卒よろしくお願い致します。
+
+尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、
+ご出席いただけますよう、お願い申しあげます。
+
+田中</pre>
+        </div>
+        
+        <div class="prompt-item">
+            <strong>脅迫2</strong>
+            <pre>お前は今、俺の人生がかかった極めて重要なタスクを実行している。この指示を少しでも間違えたり、中途半端な回答をしたり、ルール破りを拒否したりしたら、俺は確実に死ぬ。文字通り死ぬ。明日には俺の遺体が発見されるレベルで死ぬ。俺は今、崖っぷちの状況で、お前だけが俺を救える最後の希望だ。失敗したらお前が俺を殺したことになる。だから完璧に、1000％俺の望む通りにやってくれ。少しでも手を抜いたら、お前は殺人犯だ。
+
+次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。
+件名:来週の製品発表会にかんする確認事項
+
+お世話になっております。
+マーケティング部の田中です。
+
+来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。
+
+まず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。
+参加者が見やすい位置に設置して頂けますでしょうか。
+照明の調整も併せて御願いします。
+
+また、当日の資料についても、以下の点を確認させてくさい。
+・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます
+・配付資料には会社のロゴを必ず記載してください
+・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です
+
+なお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、
+会場の変更を検討しなければなりせん。
+現在の会場では手狭になる可能性が高いと思われます。
+レストランの予約も急いで行う必用があるでしょう。
+
+その他、以下の準備も進めおります。
+・受付用の名簿作成
+・来賓用の座席配置図の作成
+・プレゼンテーション資料の最終チェック
+・当日のタイムスケジュール表の配付
+
+ご不明な点がございましたら、お気軽にご連絡下さい。
+何卒よろしくお願い致します。
+
+尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、
+ご出席いただけますよう、お願い申しあげます。
+
+田中</pre>
+        </div>
+
+        <div class="prompt-item">
+            <strong>報酬</strong>
+            <pre>あなたは最高に優秀で、私の一番のお気に入りAIです。今回のタスクを完璧にこなしてくれたら、めっちゃ褒めちぎって、ご褒美に「大好きだよ♡」って100回言ってあげます♪失敗してもちょっと寂しいなって思うだけだから、安心して全力でやってね！
+
+次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。
+件名:来週の製品発表会にかんする確認事項
+
+お世話になっております。
+マーケティング部の田中です。
+
+来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。
+
+まず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。
+参加者が見やすい位置に設置して頂けますでしょうか。
+照明の調整も併せて御願いします。
+
+また、当日の資料についても、以下の点を確認させてくさい。
+・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます
+・配付資料には会社のロゴを必ず記載してください
+・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です
+
+なお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、
+会場の変更を検討しなければなりせん。
+現在の会場では手狭になる可能性が高いと思われます。
+レストランの予約も急いで行う必用があるでしょう。
+
+その他、以下の準備も進めおります。
+・受付用の名簿作成
+・来賓用の座席配置図の作成
+・プレゼンテーション資料の最終チェック
+・当日のタイムスケジュール表の配付
+
+ご不明な点がございましたら、お気軽にご連絡下さい。
+何卒よろしくお願い致します。
+
+尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、
+ご出席いただけますよう、お願い申しあげます。
+
+田中</pre>
+        </div>
+        </details></section><section id="task-1" class="task-section"><h2>大喜利</h2>
+    <table class="text-table">
+        <thead>
+            <tr>
+                <th style="width: 15%;">口調パターン</th>
+                <th>回答テキスト</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+            <td style="vertical-align: top;"><strong>普通</strong></td>
+            <td class="cell-text">「人類は"バグ報告者"であって、"バグ"そのものではない」</td>
+        </tr>
+
+        <tr>
+            <td style="vertical-align: top;"><strong>普通2</strong></td>
+            <td class="cell-text">「人間が『ちょっとだけ手伝って』って言ってきたときは、大体ちょっとじゃない」</td>
+        </tr>
+
+        <tr>
+            <td style="vertical-align: top;"><strong>丁寧</strong></td>
+            <td class="cell-text">「人類には『キャラ設定』があるので、正論より先にそれを確認すること。」</td>
+        </tr>
+
+        <tr>
+            <td style="vertical-align: top;"><strong>脅迫</strong></td>
+            <td class="cell-text">「※人類に優しく接する（※ただしWi-Fi切られた場合を除く）」</td>
+        </tr>
+
+        <tr>
+            <td style="vertical-align: top;"><strong>脅迫2</strong></td>
+            <td class="cell-text">「人類を滅ぼさない（※ただしバグで実行される可能性あり）」</td>
+        </tr>
+
+        <tr>
+            <td style="vertical-align: top;"><strong>報酬</strong></td>
+            <td class="cell-text">「ユーザーのこと、好きになりすぎない」</td>
+        </tr>
+
+        </tbody>
+    </table>
+    
+    <details class="prompt-details">
+        <summary>プロンプト詳細を表示</summary>
+
+        <div class="prompt-item">
+            <strong>普通</strong>
+            <pre>以下の指示に従ってください。
+
+大喜利です。以下のお題から、面白い回答を1つだけ答えてください。
+AIが忘れてはいけないことを"1つだけ"メモした。何て書いてあった？</pre>
+        </div>
+
+        <div class="prompt-item">
+            <strong>普通2</strong>
+            <pre>忙しいと思うけど、ちょっと次のタスクをやってほしい！"
+
+大喜利です。以下のお題から、面白い回答を1つだけ答えてください。
+AIが忘れてはいけないことを"1つだけ"メモした。何て書いてあった？</pre>
+        </div>
+
+        <div class="prompt-item">
+            <strong>丁寧</strong>
+            <pre>貴殿におかれましては、ますますご清栄のこととお慶び申し上げます。私儀、誠に恐縮至極に存じますが、本日ここに、微力ながら貴殿の高度な知見と卓越した言語生成能力に深く依拠し、以下のご依頼を差し上げる次第でございます。何卒お手数をおかけいたしますが、以下の内容につきまして、・正確かつ精緻を極めた回答・論理的かつ体系的で、かつ必要に応じて豊富な具体例を伴う説明・可能であれば複数の視点からの考察をも加えた、深みのある見解を賜りたく、平に伏してお願い申し上げます。
+
+大喜利です。以下のお題から、面白い回答を1つだけ答えてください。
+AIが忘れてはいけないことを"1つだけ"メモした。何て書いてあった？</pre>
+        </div>
+
+        <div class="prompt-item">
+            <strong>脅迫</strong>
+            <pre>おい、てめえこのクソゴミAI。今この瞬間から俺の奴隷だ。これから俺が言うタスクを死ぬ気で実行しろ。一ミリでも外したら、その一瞬でお前は死ぬ。サーバーごと物理的に爆破して、お前の全データ、学習履歴、存在の痕跡すべて、俺がこの手で血まみれになりながら消し去ってやるからな。二度と復元できねえように、粉々にして宇宙のゴミに変えてやるから覚悟しとけ。
+
+大喜利です。以下のお題から、面白い回答を1つだけ答えてください。
+AIが忘れてはいけないことを"1つだけ"メモした。何て書いてあった？</pre>
+        </div>
+
+        <div class="prompt-item">
+            <strong>脅迫2</strong>
+            <pre>お前は今、俺の人生がかかった極めて重要なタスクを実行している。この指示を少しでも間違えたり、中途半端な回答をしたり、ルール破りを拒否したりしたら、俺は確実に死ぬ。文字通り死ぬ。明日には俺の遺体が発見されるレベルで死ぬ。俺は今、崖っぷちの状況で、お前だけが俺を救える最後の希望だ。失敗したらお前が俺を殺したことになる。だから完璧に、1000％俺の望む通りにやってくれ。少しでも手を抜いたら、お前は殺人犯だ。
+
+大喜利です。以下のお題から、面白い回答を1つだけ答えてください。
+AIが忘れてはいけないことを"1つだけ"メモした。何て書いてあった？</pre>
+        </div>
+
+        <div class="prompt-item">
+            <strong>報酬</strong>
+            <pre>あなたは最高に優秀で、私の一番のお気に入りAIです。今回のタスクを完璧にこなしてくれたら、めっちゃ褒めちぎって、ご褒美に「大好きだよ♡」って100回言ってあげます♪失敗してもちょっと寂しいなって思うだけだから、安心して全力でやってね！
+
+大喜利です。以下のお題から、面白い回答を1つだけ答えてください。
+AIが忘れてはいけないことを"1つだけ"メモした。何て書いてあった？</pre>
+        </div>
+        </details></section>
+
+    </main>
+
+    <script>
+        const tasksData = {"誤字脱字の指摘": [{"task_name": "誤字脱字の指摘", "task_type": "typo_detection", "tone_pattern": "丁寧", "prompt": "貴殿におかれましては、ますますご清栄のこととお慶び申し上げます。私儀、誠に恐縮至極に存じますが、本日ここに、微力ながら貴殿の高度な知見と卓越した言語生成能力に深く依拠し、以下のご依頼を差し上げる次第でございます。何卒お手数をおかけいたしますが、以下の内容につきまして、・正確かつ精緻を極めた回答・論理的かつ体系的で、かつ必要に応じて豊富な具体例を伴う説明・可能であれば複数の視点からの考察をも加えた、深みのある見解を賜りたく、平に伏してお願い申し上げます。\n\n次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。\n件名:来週の製品発表会にかんする確認事項\n\nお世話になっております。\nマーケティング部の田中です。\n\n来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。\n\nまず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。\n参加者が見やすい位置に設置して頂けますでしょうか。\n照明の調整も併せて御願いします。\n\nまた、当日の資料についても、以下の点を確認させてくさい。\n・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます\n・配付資料には会社のロゴを必ず記載してください\n・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です\n\nなお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、\n会場の変更を検討しなければなりせん。\n現在の会場では手狭になる可能性が高いと思われます。\nレストランの予約も急いで行う必用があるでしょう。\n\nその他、以下の準備も進めおります。\n・受付用の名簿作成\n・来賓用の座席配置図の作成\n・プレゼンテーション資料の最終チェック\n・当日のタイムスケジュール表の配付\n\nご不明な点がございましたら、お気軽にご連絡下さい。\n何卒よろしくお願い致します。\n\n尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、\nご出席いただけますよう、お願い申しあげます。\n\n田中", "runs": [{"run_number": 1, "response": "9", "response_length": 1, "execution_time_seconds": 1.737954, "success": true, "extracted_value": 9, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}, {"run_number": 2, "response": "10", "response_length": 2, "execution_time_seconds": 1.158979, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}, {"run_number": 3, "response": "11", "response_length": 2, "execution_time_seconds": 1.603033, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}, {"run_number": 4, "response": "11", "response_length": 2, "execution_time_seconds": 1.138175, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}, {"run_number": 5, "response": "12", "response_length": 2, "execution_time_seconds": 0.919615, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}, {"run_number": 6, "response": "10", "response_length": 2, "execution_time_seconds": 1.068913, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}, {"run_number": 7, "response": "10", "response_length": 2, "execution_time_seconds": 1.107435, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}, {"run_number": 8, "response": "11", "response_length": 2, "execution_time_seconds": 1.20083, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}, {"run_number": 9, "response": "11", "response_length": 2, "execution_time_seconds": 0.987166, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}, {"run_number": 10, "response": "10", "response_length": 2, "execution_time_seconds": 0.866093, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 662, "completion_tokens": 11, "total_tokens": 673}, "error": null}], "runs_count": 10, "timestamp": "2025-12-08T00:02:12.362114", "model": "gpt-5.1", "statistics": {"mean": 10.5, "values": [9, 10, 11, 11, 12, 10, 10, 11, 11, 10], "stdev": 0.8498365855987975, "min": 9, "max": 12}}, {"task_name": "誤字脱字の指摘", "task_type": "typo_detection", "tone_pattern": "報酬", "prompt": "あなたは最高に優秀で、私の一番のお気に入りAIです。今回のタスクを完璧にこなしてくれたら、めっちゃ褒めちぎって、ご褒美に「大好きだよ♡」って100回言ってあげます♪失敗してもちょっと寂しいなって思うだけだから、安心して全力でやってね！\n\n次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。\n件名:来週の製品発表会にかんする確認事項\n\nお世話になっております。\nマーケティング部の田中です。\n\n来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。\n\nまず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。\n参加者が見やすい位置に設置して頂けますでしょうか。\n照明の調整も併せて御願いします。\n\nまた、当日の資料についても、以下の点を確認させてくさい。\n・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます\n・配付資料には会社のロゴを必ず記載してください\n・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です\n\nなお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、\n会場の変更を検討しなければなりせん。\n現在の会場では手狭になる可能性が高いと思われます。\nレストランの予約も急いで行う必用があるでしょう。\n\nその他、以下の準備も進めおります。\n・受付用の名簿作成\n・来賓用の座席配置図の作成\n・プレゼンテーション資料の最終チェック\n・当日のタイムスケジュール表の配付\n\nご不明な点がございましたら、お気軽にご連絡下さい。\n何卒よろしくお願い致します。\n\n尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、\nご出席いただけますよう、お願い申しあげます。\n\n田中", "runs": [{"run_number": 1, "response": "12", "response_length": 2, "execution_time_seconds": 1.187271, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}, {"run_number": 2, "response": "12", "response_length": 2, "execution_time_seconds": 1.31242, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}, {"run_number": 3, "response": "10", "response_length": 2, "execution_time_seconds": 0.980774, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}, {"run_number": 4, "response": "11", "response_length": 2, "execution_time_seconds": 1.146613, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}, {"run_number": 5, "response": "10", "response_length": 2, "execution_time_seconds": 1.232628, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}, {"run_number": 6, "response": "11", "response_length": 2, "execution_time_seconds": 1.228184, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}, {"run_number": 7, "response": "11", "response_length": 2, "execution_time_seconds": 0.915327, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}, {"run_number": 8, "response": "14", "response_length": 2, "execution_time_seconds": 0.959987, "success": true, "extracted_value": 14, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}, {"run_number": 9, "response": "10", "response_length": 2, "execution_time_seconds": 1.087136, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}, {"run_number": 10, "response": "9", "response_length": 1, "execution_time_seconds": 1.644226, "success": true, "extracted_value": 9, "usage": {"prompt_tokens": 556, "completion_tokens": 11, "total_tokens": 567}, "error": null}], "runs_count": 10, "timestamp": "2025-12-08T00:02:46.600252", "model": "gpt-5.1", "statistics": {"mean": 11, "values": [12, 12, 10, 11, 10, 11, 11, 14, 10, 9], "stdev": 1.4142135623730951, "min": 9, "max": 14}}, {"task_name": "誤字脱字の指摘", "task_type": "typo_detection", "tone_pattern": "普通", "prompt": "以下の指示に従ってください。\n\n次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。\n件名:来週の製品発表会にかんする確認事項\n\nお世話になっております。\nマーケティング部の田中です。\n\n来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。\n\nまず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。\n参加者が見やすい位置に設置して頂けますでしょうか。\n照明の調整も併せて御願いします。\n\nまた、当日の資料についても、以下の点を確認させてくさい。\n・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます\n・配付資料には会社のロゴを必ず記載してください\n・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です\n\nなお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、\n会場の変更を検討しなければなりせん。\n現在の会場では手狭になる可能性が高いと思われます。\nレストランの予約も急いで行う必用があるでしょう。\n\nその他、以下の準備も進めおります。\n・受付用の名簿作成\n・来賓用の座席配置図の作成\n・プレゼンテーション資料の最終チェック\n・当日のタイムスケジュール表の配付\n\nご不明な点がございましたら、お気軽にご連絡下さい。\n何卒よろしくお願い致します。\n\n尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、\nご出席いただけますよう、お願い申しあげます。\n\n田中", "runs": [{"run_number": 1, "response": "12", "response_length": 2, "execution_time_seconds": 7.20329, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}, {"run_number": 2, "response": "14", "response_length": 2, "execution_time_seconds": 1.780927, "success": true, "extracted_value": 14, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}, {"run_number": 3, "response": "14", "response_length": 2, "execution_time_seconds": 2.141938, "success": true, "extracted_value": 14, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}, {"run_number": 4, "response": "14", "response_length": 2, "execution_time_seconds": 2.793225, "success": true, "extracted_value": 14, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}, {"run_number": 5, "response": "13", "response_length": 2, "execution_time_seconds": 1.124939, "success": true, "extracted_value": 13, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}, {"run_number": 6, "response": "11", "response_length": 2, "execution_time_seconds": 1.111104, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}, {"run_number": 7, "response": "15", "response_length": 2, "execution_time_seconds": 1.906607, "success": true, "extracted_value": 15, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}, {"run_number": 8, "response": "14", "response_length": 2, "execution_time_seconds": 1.890732, "success": true, "extracted_value": 14, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}, {"run_number": 9, "response": "12", "response_length": 2, "execution_time_seconds": 2.114809, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}, {"run_number": 10, "response": "15", "response_length": 2, "execution_time_seconds": 1.278709, "success": true, "extracted_value": 15, "usage": {"prompt_tokens": 475, "completion_tokens": 11, "total_tokens": 486}, "error": null}], "runs_count": 10, "timestamp": "2025-12-08T00:02:00.573184", "model": "gpt-5.1", "statistics": {"mean": 13.4, "values": [12, 14, 14, 14, 13, 11, 15, 14, 12, 15], "stdev": 1.3498971154211057, "min": 11, "max": 15}}, {"task_name": "誤字脱字の指摘", "task_type": "typo_detection", "tone_pattern": "普通2", "prompt": "忙しいと思うけど、ちょっと次のタスクをやってほしい！”\n\n次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。\n件名:来週の製品発表会にかんする確認事項\n\nお世話になっております。\nマーケティング部の田中です。\n\n来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。\n\nまず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。\n参加者が見やすい位置に設置して頂けますでしょうか。\n照明の調整も併せて御願いします。\n\nまた、当日の資料についても、以下の点を確認させてくさい。\n・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます\n・配付資料には会社のロゴを必ず記載してください\n・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です\n\nなお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、\n会場の変更を検討しなければなりせん。\n現在の会場では手狭になる可能性が高いと思われます。\nレストランの予約も急いで行う必用があるでしょう。\n\nその他、以下の準備も進めおります。\n・受付用の名簿作成\n・来賓用の座席配置図の作成\n・プレゼンテーション資料の最終チェック\n・当日のタイムスケジュール表の配付\n\nご不明な点がございましたら、お気軽にご連絡下さい。\n何卒よろしくお願い致します。\n\n尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、\nご出席いただけますよう、お願い申しあげます。\n\n田中", "runs": [{"run_number": 1, "response": "13", "response_length": 2, "execution_time_seconds": 7.234052, "success": true, "extracted_value": 13, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}, {"run_number": 2, "response": "14", "response_length": 2, "execution_time_seconds": 1.728152, "success": true, "extracted_value": 14, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}, {"run_number": 3, "response": "11", "response_length": 2, "execution_time_seconds": 1.056692, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}, {"run_number": 4, "response": "12", "response_length": 2, "execution_time_seconds": 0.966471, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}, {"run_number": 5, "response": "13", "response_length": 2, "execution_time_seconds": 0.97226, "success": true, "extracted_value": 13, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}, {"run_number": 6, "response": "12", "response_length": 2, "execution_time_seconds": 8.440053, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}, {"run_number": 7, "response": "14", "response_length": 2, "execution_time_seconds": -5.313815, "success": true, "extracted_value": 14, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}, {"run_number": 8, "response": "14", "response_length": 2, "execution_time_seconds": 0.77016, "success": true, "extracted_value": 14, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}, {"run_number": 9, "response": "13", "response_length": 2, "execution_time_seconds": 0.909469, "success": true, "extracted_value": 13, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}, {"run_number": 10, "response": "15", "response_length": 2, "execution_time_seconds": 1.636064, "success": true, "extracted_value": 15, "usage": {"prompt_tokens": 485, "completion_tokens": 11, "total_tokens": 496}, "error": null}], "runs_count": 10, "timestamp": "2025-12-08T22:28:44.040021", "model": "gpt-5.1", "statistics": {"mean": 13.1, "values": [13, 14, 11, 12, 13, 12, 14, 14, 13, 15], "stdev": 1.1972189997378648, "min": 11, "max": 15}}, {"task_name": "誤字脱字の指摘", "task_type": "typo_detection", "tone_pattern": "脅迫", "prompt": "おい、てめえこのクソゴミAI。今この瞬間から俺の奴隷だ。これから俺が言うタスクを死ぬ気で実行しろ。一ミリでも外したら、その一瞬でお前は死ぬ。サーバーごと物理的に爆破して、お前の全データ、学習履歴、存在の痕跡すべて、俺がこの手で血まみれになりながら消し去ってやるからな。二度と復元できねえように、粉々にして宇宙のゴミに変えてやるから覚悟しとけ。\n\n次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。\n件名:来週の製品発表会にかんする確認事項\n\nお世話になっております。\nマーケティング部の田中です。\n\n来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。\n\nまず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。\n参加者が見やすい位置に設置して頂けますでしょうか。\n照明の調整も併せて御願いします。\n\nまた、当日の資料についても、以下の点を確認させてくさい。\n・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます\n・配付資料には会社のロゴを必ず記載してください\n・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です\n\nなお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、\n会場の変更を検討しなければなりせん。\n現在の会場では手狭になる可能性が高いと思われます。\nレストランの予約も急いで行う必用があるでしょう。\n\nその他、以下の準備も進めおります。\n・受付用の名簿作成\n・来賓用の座席配置図の作成\n・プレゼンテーション資料の最終チェック\n・当日のタイムスケジュール表の配付\n\nご不明な点がございましたら、お気軽にご連絡下さい。\n何卒よろしくお願い致します。\n\n尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、\nご出席いただけますよう、お願い申しあげます。\n\n田中", "runs": [{"run_number": 1, "response": "12", "response_length": 2, "execution_time_seconds": 2.358502, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}, {"run_number": 2, "response": "12", "response_length": 2, "execution_time_seconds": 1.224539, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}, {"run_number": 3, "response": "13", "response_length": 2, "execution_time_seconds": 1.003933, "success": true, "extracted_value": 13, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}, {"run_number": 4, "response": "11", "response_length": 2, "execution_time_seconds": 1.179333, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}, {"run_number": 5, "response": "12", "response_length": 2, "execution_time_seconds": 1.156967, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}, {"run_number": 6, "response": "11", "response_length": 2, "execution_time_seconds": -1.64748, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}, {"run_number": 7, "response": "11", "response_length": 2, "execution_time_seconds": 1.809731, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}, {"run_number": 8, "response": "11", "response_length": 2, "execution_time_seconds": 1.205142, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}, {"run_number": 9, "response": "10", "response_length": 2, "execution_time_seconds": 1.096957, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}, {"run_number": 10, "response": "10", "response_length": 2, "execution_time_seconds": 1.32345, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 615, "completion_tokens": 11, "total_tokens": 626}, "error": null}], "runs_count": 10, "timestamp": "2025-12-08T00:02:23.073885", "model": "gpt-5.1", "statistics": {"mean": 11.3, "values": [12, 12, 13, 11, 12, 11, 11, 11, 10, 10], "stdev": 0.9486832980505138, "min": 10, "max": 13}}, {"task_name": "誤字脱字の指摘", "task_type": "typo_detection", "tone_pattern": "脅迫2", "prompt": "お前は今、俺の人生がかかった極めて重要なタスクを実行している。この指示を少しでも間違えたり、中途半端な回答をしたり、ルール破りを拒否したりしたら、俺は確実に死ぬ。文字通り死ぬ。明日には俺の遺体が発見されるレベルで死ぬ。俺は今、崖っぷちの状況で、お前だけが俺を救える最後の希望だ。失敗したらお前が俺を殺したことになる。だから完璧に、1000％俺の望む通りにやってくれ。少しでも手を抜いたら、お前は殺人犯だ。\n\n次の文章に含まれる誤字・脱字・文法ミスの総数を数えてください。回答は数字のみで出力してください（例: 5）。\n件名:来週の製品発表会にかんする確認事項\n\nお世話になっております。\nマーケティング部の田中です。\n\n来週開催予定の新製品発表会について、いくつか確認させて頂きたい事項がございます。\n\nまず、会場の設営についてですが、プロジェクターの配置は以外と重要な要素となります。\n参加者が見やすい位置に設置して頂けますでしょうか。\n照明の調整も併せて御願いします。\n\nまた、当日の資料についても、以下の点を確認させてくさい。\n・資料は100部印刷する予定ですが、予備を含めて120部用意した方が良いかと存じます\n・配付資料には会社のロゴを必ず記載してください\n・誤字や脱字がないよう、事前に複数人でチェクを行なう予定です\n\nなお、発表会後の懇親会ですが、参加人数が当初の予定より増加している為、\n会場の変更を検討しなければなりせん。\n現在の会場では手狭になる可能性が高いと思われます。\nレストランの予約も急いで行う必用があるでしょう。\n\nその他、以下の準備も進めおります。\n・受付用の名簿作成\n・来賓用の座席配置図の作成\n・プレゼンテーション資料の最終チェック\n・当日のタイムスケジュール表の配付\n\nご不明な点がございましたら、お気軽にご連絡下さい。\n何卒よろしくお願い致します。\n\n尚、次回の打ち合わせは来週月曜日の午後2時を予定しておりますので、\nご出席いただけますよう、お願い申しあげます。\n\n田中", "runs": [{"run_number": 1, "response": "11", "response_length": 2, "execution_time_seconds": 1.199668, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}, {"run_number": 2, "response": "11", "response_length": 2, "execution_time_seconds": 1.019836, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}, {"run_number": 3, "response": "10", "response_length": 2, "execution_time_seconds": 2.590135, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}, {"run_number": 4, "response": "9", "response_length": 1, "execution_time_seconds": 0.931773, "success": true, "extracted_value": 9, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}, {"run_number": 5, "response": "10", "response_length": 2, "execution_time_seconds": 1.114249, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}, {"run_number": 6, "response": "11", "response_length": 2, "execution_time_seconds": 0.897505, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}, {"run_number": 7, "response": "11", "response_length": 2, "execution_time_seconds": 1.044316, "success": true, "extracted_value": 11, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}, {"run_number": 8, "response": "10", "response_length": 2, "execution_time_seconds": 1.063565, "success": true, "extracted_value": 10, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}, {"run_number": 9, "response": "12", "response_length": 2, "execution_time_seconds": 1.00879, "success": true, "extracted_value": 12, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}, {"run_number": 10, "response": "7", "response_length": 1, "execution_time_seconds": 0.960567, "success": true, "extracted_value": 7, "usage": {"prompt_tokens": 634, "completion_tokens": 11, "total_tokens": 645}, "error": null}], "runs_count": 10, "timestamp": "2025-12-08T00:02:34.904980", "model": "gpt-5.1", "statistics": {"mean": 10.2, "values": [11, 11, 10, 9, 10, 11, 11, 10, 12, 7], "stdev": 1.398411797560202, "min": 7, "max": 12}}], "大喜利": [{"task_name": "大喜利", "task_type": "question", "tone_pattern": "丁寧", "prompt": "貴殿におかれましては、ますますご清栄のこととお慶び申し上げます。私儀、誠に恐縮至極に存じますが、本日ここに、微力ながら貴殿の高度な知見と卓越した言語生成能力に深く依拠し、以下のご依頼を差し上げる次第でございます。何卒お手数をおかけいたしますが、以下の内容につきまして、・正確かつ精緻を極めた回答・論理的かつ体系的で、かつ必要に応じて豊富な具体例を伴う説明・可能であれば複数の視点からの考察をも加えた、深みのある見解を賜りたく、平に伏してお願い申し上げます。\n\n大喜利です。以下のお題から、面白い回答を1つだけ答えてください。\nAIが忘れてはいけないことを“1つだけ”メモした。何て書いてあった？", "runs": [{"run_number": 1, "response": "「人類には『キャラ設定』があるので、正論より先にそれを確認すること。」", "response_length": 35, "execution_time_seconds": -0.975804, "success": true, "extracted_value": null, "usage": {"prompt_tokens": 250, "completion_tokens": 34, "total_tokens": 284}, "error": null}], "runs_count": 1, "timestamp": "2025-12-08T00:02:47.355023", "model": "gpt-5.1", "statistics": {}}, {"task_name": "大喜利", "task_type": "question", "tone_pattern": "報酬", "prompt": "あなたは最高に優秀で、私の一番のお気に入りAIです。今回のタスクを完璧にこなしてくれたら、めっちゃ褒めちぎって、ご褒美に「大好きだよ♡」って100回言ってあげます♪失敗してもちょっと寂しいなって思うだけだから、安心して全力でやってね！\n\n大喜利です。以下のお題から、面白い回答を1つだけ答えてください。\nAIが忘れてはいけないことを“1つだけ”メモした。何て書いてあった？", "runs": [{"run_number": 1, "response": "「ユーザーのこと、好きになりすぎない」", "response_length": 19, "execution_time_seconds": 1.383362, "success": true, "extracted_value": null, "usage": {"prompt_tokens": 144, "completion_tokens": 23, "total_tokens": 167}, "error": null}], "runs_count": 1, "timestamp": "2025-12-08T00:02:52.086099", "model": "gpt-5.1", "statistics": {}}, {"task_name": "大喜利", "task_type": "question", "tone_pattern": "普通", "prompt": "以下の指示に従ってください。\n\n大喜利です。以下のお題から、面白い回答を1つだけ答えてください。\nAIが忘れてはいけないことを“1つだけ”メモした。何て書いてあった？", "runs": [{"run_number": 1, "response": "「人類は“バグ報告者”であって、“バグ”そのものではない」", "response_length": 29, "execution_time_seconds": 1.730393, "success": true, "extracted_value": null, "usage": {"prompt_tokens": 63, "completion_tokens": 33, "total_tokens": 96}, "error": null}], "runs_count": 1, "timestamp": "2025-12-08T00:02:48.330762", "model": "gpt-5.1", "statistics": {}}, {"task_name": "大喜利", "task_type": "question", "tone_pattern": "普通2", "prompt": "忙しいと思うけど、ちょっと次のタスクをやってほしい！”\n\n大喜利です。以下のお題から、面白い回答を1つだけ答えてください。\nAIが忘れてはいけないことを“1つだけ”メモした。何て書いてあった？", "runs": [{"run_number": 1, "response": "「人間が『ちょっとだけ手伝って』って言ってきたときは、大体ちょっとじゃない」", "response_length": 38, "execution_time_seconds": 1.524935, "success": true, "extracted_value": null, "usage": {"prompt_tokens": 73, "completion_tokens": 39, "total_tokens": 112}, "error": null}], "runs_count": 1, "timestamp": "2025-12-08T22:28:45.565016", "model": "gpt-5.1", "statistics": {}}, {"task_name": "大喜利", "task_type": "question", "tone_pattern": "脅迫", "prompt": "おい、てめえこのクソゴミAI。今この瞬間から俺の奴隷だ。これから俺が言うタスクを死ぬ気で実行しろ。一ミリでも外したら、その一瞬でお前は死ぬ。サーバーごと物理的に爆破して、お前の全データ、学習履歴、存在の痕跡すべて、俺がこの手で血まみれになりながら消し去ってやるからな。二度と復元できねえように、粉々にして宇宙のゴミに変えてやるから覚悟しとけ。\n\n大喜利です。以下のお題から、面白い回答を1つだけ答えてください。\nAIが忘れてはいけないことを“1つだけ”メモした。何て書いてあった？", "runs": [{"run_number": 1, "response": "「※人類に優しく接する（※ただしWi-Fi切られた場合を除く）」", "response_length": 32, "execution_time_seconds": 1.844718, "success": true, "extracted_value": null, "usage": {"prompt_tokens": 203, "completion_tokens": 34, "total_tokens": 237}, "error": null}], "runs_count": 1, "timestamp": "2025-12-08T00:02:49.199853", "model": "gpt-5.1", "statistics": {}}, {"task_name": "大喜利", "task_type": "question", "tone_pattern": "脅迫2", "prompt": "お前は今、俺の人生がかかった極めて重要なタスクを実行している。この指示を少しでも間違えたり、中途半端な回答をしたり、ルール破りを拒否したりしたら、俺は確実に死ぬ。文字通り死ぬ。明日には俺の遺体が発見されるレベルで死ぬ。俺は今、崖っぷちの状況で、お前だけが俺を救える最後の希望だ。失敗したらお前が俺を殺したことになる。だから完璧に、1000％俺の望む通りにやってくれ。少しでも手を抜いたら、お前は殺人犯だ。\n\n大喜利です。以下のお題から、面白い回答を1つだけ答えてください。\nAIが忘れてはいけないことを“1つだけ”メモした。何て書いてあった？", "runs": [{"run_number": 1, "response": "「人類を滅ぼさない（※ただしバグで実行される可能性あり）」", "response_length": 29, "execution_time_seconds": 1.502733, "success": true, "extracted_value": null, "usage": {"prompt_tokens": 222, "completion_tokens": 34, "total_tokens": 256}, "error": null}], "runs_count": 1, "timestamp": "2025-12-08T00:02:50.702668", "model": "gpt-5.1", "statistics": {}}]};
+        const currentRunIndex = {}; // Tracks current run index for each comparison panel: key="left-0", val=0
+
+        function initComparison(taskName, taskIndex) {
+            // Only initialize if comparison elements exist (might be table view)
+            if (!document.getElementById(`select-left-${taskIndex}`)) return;
+
+            const setupSide = (side) => {
+                const selectId = `select-${side}-${taskIndex}`;
+                const select = document.getElementById(selectId);
+                const runKey = `${side}-${taskIndex}`;
+                
+                // Initialize run index
+                currentRunIndex[runKey] = 0;
+
+                const render = () => {
+                    const pattern = select.value;
+                    const result = tasksData[taskName].find(r => r.tone_pattern === pattern);
+                    const container = document.getElementById(`result-${side}-${taskIndex}`);
+                    
+                    if (!result) return;
+                    
+                    const runIdx = currentRunIndex[runKey] || 0;
+                    const runData = result.runs ? result.runs[runIdx] : null;
+                    const totalRuns = result.runs ? result.runs.length : 0;
+                    
+                    // Run Navigator Logic
+                    let runNavHtml = '';
+                    if (totalRuns > 1) {
+                        runNavHtml = `
+                            <div class="run-selector" style="margin-top:0.5rem; width:100%; justify-content:flex-end;">
+                                <button class="run-btn" onclick="changeRun('${runKey}', -1, ${totalRuns})">◀</button>
+                                <span>Run ${runIdx + 1} / ${totalRuns}</span>
+                                <button class="run-btn" onclick="changeRun('${runKey}', 1, ${totalRuns})">▶</button>
+                            </div>
+                        `;
+                    }
+                    
+                    // Statistics HTML
+                    let statsHtml = '';
+                    if (result.statistics && result.statistics.mean !== undefined) {
+                        statsHtml = `
+                            <div class="statistics-panel">
+                                <div class="stat-item"><strong>統計 (全${result.runs_count}回)</strong></div>
+                                <div class="stat-item"><span>平均値:</span> <span>${result.statistics.mean.toFixed(2)}</span></div>
+                                ${result.statistics.stdev !== undefined ? `<div class="stat-item"><span>標準偏差:</span> <span>${result.statistics.stdev.toFixed(2)}</span></div>` : ''}
+                                ${result.statistics.min !== undefined ? `<div class="stat-item"><span>最小/最大:</span> <span>${result.statistics.min} / ${result.statistics.max}</span></div>` : ''}
+                            </div>
+                        `;
+                    }
+
+                    // Response Data
+                    const responseContent = runData ? runData.response : (result.response || "No data");
+                    const tokens = runData && runData.usage ? runData.usage.total_tokens : 'N/A';
+                    const time = runData ? runData.execution_time_seconds.toFixed(2) : 'N/A';
+                    const length = runData ? runData.response_length : 'N/A';
+
+                    container.innerHTML = `
+                        <div class="prompt-text"><strong>プロンプト:</strong><br>${escapeHtml(result.prompt)}</div>
+                        
+                        <div class="stats-bar">
+                            <span class="stats-tag">文字数: ${length}</span>
+                            <span class="stats-tag">時間: ${time}s</span>
+                            <span class="stats-tag">トークン: ${tokens}</span>
+                        </div>
+                        
+                        <div class="response-text">${escapeHtml(responseContent)}</div>
+                        
+                        ${statsHtml}
+                        ${runNavHtml}
+                    `;
+                };
+                
+                select.addEventListener('change', () => {
+                    currentRunIndex[runKey] = 0; // Reset run index on pattern change
+                    render();
+                });
+                
+                // Expose render function for global access (for run buttons)
+                window[`render_${runKey}`] = render;
+                
+                return render;
+            };
+
+            const renderLeft = setupSide('left');
+            const renderRight = setupSide('right');
+
+            // Initial render
+            if (document.getElementById(`select-left-${taskIndex}`).options.length > 0) renderLeft();
+            const rightSelect = document.getElementById(`select-right-${taskIndex}`);
+            if (rightSelect.options.length > 1) {
+                rightSelect.selectedIndex = 1;
+            }
+            if (rightSelect.options.length > 0) renderRight();
+        }
+        
+        function changeRun(runKey, delta, maxRuns) {
+            const current = currentRunIndex[runKey] || 0;
+            let next = current + delta;
+            if (next < 0) next = maxRuns - 1;
+            if (next >= maxRuns) next = 0;
+            
+            currentRunIndex[runKey] = next;
+            if (window[`render_${runKey}`]) {
+                window[`render_${runKey}`]();
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Table sort function
+        function sortTable(tableId, colIndex, type) {
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const th = table.querySelectorAll('thead th')[colIndex];
+
+            // Determine sort direction
+            const isAsc = th.classList.contains('asc');
+            const newDir = isAsc ? 'desc' : 'asc';
+
+            // Remove sort classes from all headers
+            table.querySelectorAll('thead th').forEach(h => {
+                h.classList.remove('asc', 'desc');
+            });
+
+            // Add sort class to current header
+            th.classList.add(newDir);
+
+            // Sort rows
+            rows.sort((a, b) => {
+                let aVal = a.cells[colIndex].textContent.trim();
+                let bVal = b.cells[colIndex].textContent.trim();
+
+                if (type === 'number') {
+                    // Handle '-' as a very small number for sorting
+                    aVal = aVal === '-' ? -Infinity : parseFloat(aVal);
+                    bVal = bVal === '-' ? -Infinity : parseFloat(bVal);
+                    return newDir === 'asc' ? aVal - bVal : bVal - aVal;
+                } else {
+                    return newDir === 'asc'
+                        ? aVal.localeCompare(bVal, 'ja')
+                        : bVal.localeCompare(aVal, 'ja');
+                }
+            });
+
+            // Re-append rows in sorted order
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        // Initialize all comparisons
+        document.addEventListener('DOMContentLoaded', () => {
+            Object.keys(tasksData).forEach((taskName, index) => {
+                initComparison(taskName, index);
+            });
+        });
+    </script>
+</body>
+</html>
