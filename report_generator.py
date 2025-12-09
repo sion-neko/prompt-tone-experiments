@@ -724,3 +724,22 @@ def escape_html_py(text):
     if not text:
         return ""
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&#039;")
+
+
+if __name__ == "__main__":
+    # 既存のresults.jsonからHTMLレポートを生成
+    with open("output/results.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # 設定情報を復元
+    config = {
+        "model": data["experiment_info"]["model"],
+        "tasks": [{"name": task_name} for task_name in data["experiment_info"]["tasks"]]
+    }
+
+    # 口調パターンを復元
+    tone_patterns = {pattern: pattern for pattern in data["experiment_info"]["tone_patterns"]}
+
+    # HTMLレポート生成
+    generate_html_report(data["results"], config, tone_patterns)
+    print("HTMLレポートが生成されました。output/index.html をブラウザで開いてください。")
