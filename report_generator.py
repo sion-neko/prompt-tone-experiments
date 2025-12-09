@@ -728,7 +728,7 @@ def escape_html_py(text):
 
 if __name__ == "__main__":
     # 既存のresults.jsonからHTMLレポートを生成
-    with open("docs/results.json", "r", encoding="utf-8") as f:
+    with open("output/results.json", "r", encoding="utf-8") as f:
         data = json.load(f)
 
     # 設定情報を復元
