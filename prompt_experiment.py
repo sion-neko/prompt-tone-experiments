@@ -16,7 +16,7 @@ from report_generator import generate_html_report
 
 # データディレクトリのパス
 DATA_DIR = Path(__file__).parent / "data"
-OUTPUT_DIR = Path(__file__).parent / "output"
+OUTPUT_DIR = Path(__file__).parent / "docs"
 
 
 def load_file(filename: str) -> Any:
@@ -217,7 +217,7 @@ def run_experiment(client: OpenAI, config: Dict[str, Any], tone_patterns: Dict[s
     return results
 
 
-def save_results(results: List[Dict[str, Any]], config: Dict[str, Any], tone_patterns: Dict[str, str], filename: str = "output/results.json"):
+def save_results(results: List[Dict[str, Any]], config: Dict[str, Any], tone_patterns: Dict[str, str], filename: str = "docs/results.json"):
     """
     結果をJSONファイルに保存
 
@@ -264,11 +264,11 @@ def main():
         results = run_experiment(client, config, tone_patterns)
 
         # 結果保存
-        output_file = config.get("output_file", "output/results.json")
+        output_file = config.get("output_file", "docs/results.json")
         save_results(results, config, tone_patterns, output_file)
 
         # HTMLレポート生成
-        html_file = config.get("html_report_file", "output/index.html")
+        html_file = config.get("html_report_file", "docs/index.html")
         generate_html_report(results, config, tone_patterns, html_file)
 
     except FileNotFoundError as e:

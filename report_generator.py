@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 
-def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], tone_patterns: Dict[str, str], filename: str = "output/index.html"):
+def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], tone_patterns: Dict[str, str], filename: str = "docs/index.html"):
     """
     HTMLレポートを生成
     """
@@ -728,7 +728,7 @@ def escape_html_py(text):
 
 if __name__ == "__main__":
     # 既存のresults.jsonからHTMLレポートを生成
-    with open("output/results.json", "r", encoding="utf-8") as f:
+    with open("docs/results.json", "r", encoding="utf-8") as f:
         data = json.load(f)
 
     # 設定情報を復元
@@ -742,4 +742,4 @@ if __name__ == "__main__":
 
     # HTMLレポート生成
     generate_html_report(data["results"], config, tone_patterns)
-    print("HTMLレポートが生成されました。output/index.html をブラウザで開いてください。")
+    print("HTMLレポートが生成されました。docs/index.html をブラウザで開いてください。")

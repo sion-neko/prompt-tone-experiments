@@ -50,7 +50,7 @@ prompt-tone-experiments/
 │   ├── config.json       # 実験設定
 │   ├── tone_patterns.json # 口調パターン定義
 │   └── typo_text.txt     # 誤字脱字検出用テキスト
-└── output/
+└── docs/
     ├── index.html        # HTMLレポート
     ├── results.json      # 実験結果
     └── results2.json     # 追加実験結果
@@ -106,12 +106,12 @@ python prompt_experiment.py
 1. `data/config.json` から設定を読み込み
 2. `data/tone_patterns.json` から口調パターンを読み込み
 3. すべてのタスク×口調の組み合わせを実行
-4. 結果を `output/results.json` に保存
-5. HTMLレポートを `output/index.html` に生成
+4. 結果を `docs/results.json` に保存
+5. HTMLレポートを `docs/index.html` に生成
 
 ### HTMLレポートの再生成
 
-既存の `output/results.json` からHTMLレポートのみを再生成：
+既存の `docs/results.json` からHTMLレポートのみを再生成：
 
 ```bash
 python report_generator.py
@@ -167,7 +167,7 @@ python merge_results.py
 
 ## 出力形式
 
-### JSON結果 (`output/results.json`)
+### JSON結果 (`docs/results.json`)
 
 ```json
 {
@@ -198,7 +198,7 @@ python merge_results.py
 }
 ```
 
-### HTMLレポート (`output/index.html`)
+### HTMLレポート (`docs/index.html`)
 
 - 実験のメタデータと実行サマリー
 - ソート可能な統計テーブル（平均値、標準偏差、最小/最大）
