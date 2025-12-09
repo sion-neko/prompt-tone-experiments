@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 
-def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], tone_patterns: Dict[str, str], filename: str = "report.html"):
+def generate_html_report(results: List[Dict[str, Any]], config: Dict[str, Any], tone_patterns: Dict[str, str], filename: str = "output/index.html"):
     """
     HTMLレポートを生成
     """
