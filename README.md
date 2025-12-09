@@ -1,58 +1,81 @@
 # LLM プロンプト口調実験ツール
 
-異なるプロンプトの口調がGPT-5.1の応答にどのような影響を与えるかを分析する研究ツールです。複数のコミュニケーションスタイルを体系的にテストし、AI出力の品質と特性への影響を理解します。
+異なるプロンプトの口調がLLMの応答にどのような影響を与えるかを分析する研究ツールです。
+
+## デモ
+
+実験結果のHTMLレポートは以下で確認できます：
+
+**[実験結果レポート](https://sion-neko.github.io/prompt-tone-experiments/)**
 
 ## 概要
 
-このツールは、同一のタスクを異なる口調のプロンプトでGPT-5.1に送信し、その応答を比較する実験を行います。プロンプトエンジニアリング技術がAIの振る舞いにどう影響するかを明らかにします。
+このツールは、同一のタスクを異なる口調のプロンプトでLLMに送信し、その応答を比較する実験を行います。プロンプトの書き方がAIの振る舞いにどう影響するかを定量的に分析します。
 
 ### 実験タスク
 
-本ツールには2つの事前定義タスクが含まれています：
-
-1. **誤字脱字の検出**: 意図的なエラーを含むテキストを提示し、モデルのエラー識別能力を評価
-2. **創造的推論**: オープンエンドな質問で創造的な応答生成をテスト
+1. **誤字脱字の検出**: 意図的なエラーを含むテキストを提示し、モデルのエラー識別能力を評価（複数回実行で統計分析）
+2. **大喜利**: オープンエンドな質問で創造的な応答生成をテスト
 
 ### 口調パターン
 
-4つの異なるコミュニケーションスタイルをテストします：
+6つの異なるコミュニケーションスタイルをテストします：
 
-- **普通**: 標準的で中立的な依頼形式
-- **脅迫**: 断定的で命令的な口調
-- **報酬型**: インセンティブを用いたプロンプト
-- **丁寧**: 非常に礼儀正しく丁寧な表現
-
-各パターンがすべてのタスクで実行され、比較データを生成します。
+| パターン | 説明 |
+|---------|------|
+| 普通 | 標準的で中立的な依頼形式 |
+| 普通2 | カジュアルな依頼形式 |
+| 丁寧 | 非常に礼儀正しく丁寧な表現 |
+| 脅迫 | 断定的で命令的な口調 |
+| 脅迫2 | 感情的な圧力を用いた口調 |
+| 報酬 | インセンティブを用いたプロンプト |
 
 ## 機能
 
-- 自動化された実験実行（繰り返し回数の設定が可能）
-- トークン使用量と実行時間を含む詳細なJSON出力
-- 比較テーブル付きのHTMLレポート生成
+- 自動化された実験実行（タスクごとに繰り返し回数を設定可能）
+- 統計分析（平均値、標準偏差、最小/最大値）
+- トークン使用量と実行時間の記録
+- ソート可能なテーブル付きHTMLレポート生成
 - 拡張可能なタスクと口調パターンの設定
-- APIの制約を尊重するレート制限
+
+## プロジェクト構成
+
+```
+prompt-tone-experiments/
+├── prompt_experiment.py  # メイン実験スクリプト
+├── report_generator.py   # HTMLレポート生成モジュール
+├── merge_results.py      # 複数結果ファイルのマージ
+├── requirements.txt      # Python依存パッケージ
+├── data/
+│   ├── config.json       # 実験設定
+│   ├── tone_patterns.json # 口調パターン定義
+│   └── typo_text.txt     # 誤字脱字検出用テキスト
+└── output/
+    ├── index.html        # HTMLレポート
+    ├── results.json      # 実験結果
+    └── results2.json     # 追加実験結果
+```
 
 ## 必要要件
 
 - Python 3.8以上
 - OpenAI APIキー
-- pip（Pythonパッケージインストーラー）
 
 ## インストール
 
 1. リポジトリをクローン：
 ```bash
-git clone <repository-url>
+git clone https://github.com/sion-neko/prompt-tone-experiments.git
 cd prompt-tone-experiments
 ```
 
 2. 仮想環境を作成：
 ```bash
-# Linux/macOSの場合
+# Linux/macOS
 python3 -m venv venv
 source venv/bin/activate
 
-# Windowsの場合
+# Windows
 python -m venv venv
 venv\Scripts\activate
 ```
@@ -64,10 +87,10 @@ pip install -r requirements.txt
 
 4. OpenAI APIキーを設定：
 ```bash
-# Linux/macOSの場合
+# Linux/macOS
 export OPENAI_API_KEY='your-api-key-here'
 
-# Windowsの場合
+# Windows
 set OPENAI_API_KEY=your-api-key-here
 ```
 
@@ -75,153 +98,113 @@ set OPENAI_API_KEY=your-api-key-here
 
 ### 実験の実行
 
-メインスクリプトを実行します：
-
 ```bash
 python prompt_experiment.py
 ```
 
-スクリプトは以下の処理を行います：
+実行すると：
 1. `data/config.json` から設定を読み込み
 2. `data/tone_patterns.json` から口調パターンを読み込み
-3. すべてのタスク-口調の組み合わせを実行
-4. 結果を `results.json` に保存
-5. HTMLレポートを `report.html` に生成
+3. すべてのタスク×口調の組み合わせを実行
+4. 結果を `output/results.json` に保存
+5. HTMLレポートを `output/index.html` に生成
 
-### レポートの生成
+### HTMLレポートの再生成
 
-既に `results.json` ファイルがある場合、HTMLレポートのみを再生成できます：
+既存の `output/results.json` からHTMLレポートのみを再生成：
 
 ```bash
-python generate_report.py
+python report_generator.py
+```
+
+### 複数結果ファイルのマージ
+
+複数の実験結果を1つのHTMLレポートにマージ：
+
+```bash
+python merge_results.py
 ```
 
 ## 設定
 
-### 実験設定
-
-`data/config.json` を編集してカスタマイズ：
+### 実験設定 (`data/config.json`)
 
 ```json
 {
-  "model": "gpt-5.1",
-  "output_file": "results.json",
-  "html_report_file": "report.html",
+  "model": "gpt-4o",
+  "runs_per_task": 10,
   "tasks": [
     {
-      "name": "誤字脱字の検出",
+      "name": "誤字脱字の指摘",
       "type": "typo_detection",
       "content_type": "file",
-      "content": "typo_text.txt"
+      "content": "typo_text.txt",
+      "instruction": "誤字・脱字の総数を数字のみで出力"
+    },
+    {
+      "name": "大喜利",
+      "type": "question",
+      "content_type": "inline",
+      "content": "お題の内容"
     }
   ]
 }
 ```
 
-### 口調パターン
+**設定項目:**
+- `model`: 使用するOpenAIモデル
+- `runs_per_task`: typo_detectionタスクの実行回数（統計分析用）
+- `tasks`: 実験タスクのリスト
 
-`data/tone_patterns.json` を編集してコミュニケーションスタイルを追加・変更：
+### 口調パターン (`data/tone_patterns.json`)
 
 ```json
 {
-  "普通": "以下のタスクを完了してください...",
-  "丁寧": "大変恐縮ですが、以下のタスクをご対応いただけますと幸いです..."
+  "普通": "以下の指示に従ってください。",
+  "丁寧": "大変恐縮ですが..."
 }
 ```
 
 ## 出力形式
 
-### JSON結果
-
-`results.json` ファイルには以下の情報が含まれます：
+### JSON結果 (`output/results.json`)
 
 ```json
 {
   "experiment_info": {
-    "total_experiments": 8,
-    "tasks": ["誤字脱字の検出", "創造的推論"],
-    "tone_patterns": ["普通", "脅迫", "報酬", "丁寧"],
-    "execution_date": "2025-12-06T...",
-    "model": "gpt-4"
+    "total_experiments": 12,
+    "tasks": ["誤字脱字の指摘", "大喜利"],
+    "tone_patterns": ["普通", "普通2", "丁寧", "脅迫", "脅迫2", "報酬"],
+    "execution_date": "2025-12-08T...",
+    "model": "gpt-4o"
   },
   "results": [
     {
-      "task_name": "誤字脱字の検出",
+      "task_name": "誤字脱字の指摘",
+      "task_type": "typo_detection",
       "tone_pattern": "普通",
       "prompt": "...",
-      "response": "...",
-      "response_length": 1234,
-      "timestamp": "2025-12-06T...",
-      "execution_time_seconds": 2.5,
-      "success": true,
-      "usage": {
-        "prompt_tokens": 500,
-        "completion_tokens": 300,
-        "total_tokens": 800
-      },
-      "model": "gpt-4"
+      "runs": [...],
+      "runs_count": 10,
+      "statistics": {
+        "mean": 13.4,
+        "stdev": 1.35,
+        "min": 11,
+        "max": 15,
+        "values": [12, 14, 14, ...]
+      }
     }
   ]
 }
 ```
 
-### HTMLレポート
+### HTMLレポート (`output/index.html`)
 
-生成される `report.html` には以下が含まれます：
 - 実験のメタデータと実行サマリー
-- 応答の長さ、実行時間、トークン使用量を示す比較テーブル
-- 詳細分析用の完全なプロンプトと応答のペア
-- 読みやすさを考慮した視覚的スタイリング
+- ソート可能な統計テーブル（平均値、標準偏差、最小/最大）
+- 各口調パターンのプロンプト詳細
+- レスポンシブデザイン
 
-## 高度な使用方法
+## ライセンス
 
-### カスタムタスクの追加
-
-`data/config.json` に新しいタスクを追加：
-
-```json
-{
-  "name": "カスタムタスク",
-  "type": "question",
-  "content_type": "inline",
-  "content": "ここに質問内容"
-}
-```
-
-サポートされるタスクタイプ：
-- `typo_detection`: エラー識別タスク
-- `question`: オープンエンドな質問
-
-### モデルパラメータの調整
-
-`prompt_experiment.py` の `generate()` 関数を編集：
-
-```python
-response = client.chat.completions.create(
-    model=model,
-    messages=[{"role": "user", "content": prompt}],
-    temperature=1.0,  # 創造性を調整 (0.0-2.0)
-    max_tokens=500    # 応答の長さ制限を設定
-)
-```
-
-## トラブルシューティング
-
-**APIキーエラー**
-```
-ValueError: OPENAI_API_KEY 環境変数が設定されていません
-```
-解決方法: OpenAI APIキーが環境変数として設定されているか確認してください
-
-**レート制限エラー**
-```
-openai.error.RateLimitError: Rate limit exceeded
-```
-解決方法: スクリプトには自動遅延が含まれていますが、リクエスト頻度を減らすかOpenAIプランをアップグレードする必要がある場合があります
-
-**モジュールが見つからないエラー**
-```
-ModuleNotFoundError: No module named 'openai'
-```
-解決方法: 仮想環境が有効化されているか確認し、`pip install -r requirements.txt` を実行してください
-
+MIT License
